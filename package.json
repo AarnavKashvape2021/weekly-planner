@@ -1,0 +1,15 @@
+{
+  "name": "weekly-study-planner",
+  "version": "2.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "db:create": "wrangler d1 create weekly-planner-db",
+    "db:init:local": "wrangler d1 execute weekly-planner-db --local --file=./schema.sql",
+    "db:init:remote": "wrangler d1 execute weekly-planner-db --remote --file=./schema.sql"
+  },
+  "devDependencies": {
+    "wrangler": "^4.0.0"
+  }
+}

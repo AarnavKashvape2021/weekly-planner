@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Static Weekly Planner — Studies, Papers, Applications &amp; Deadlines</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+
+  <!-- TOP CONTROLS -->
+  <header>
+    <div class="brand">
+      <h1>Weekly Study &amp; Project Planner</h1>
+      <span class="save-status" id="saveBadge">&#10003; Auto-Saved</span>
+      <button class="reconnect-btn" id="reconnectBtn" onclick="reconnectDiskFile()">
+        &#9889; Reconnect Disk File
+      </button>
+    </div>
+
+    <div class="toolbar">
+      <button class="primary" onclick="openCatModal()">&#9881; Categories &amp; Colors</button>
+
+      <label class="hours-label">
+        Hours:
+        <select id="startHourSelect" onchange="updateHours()">
+          <option value="0">00:00</option>
+          <option value="5">05:00</option>
+          <option value="6" selected>06:00</option>
+          <option value="7">07:00</option>
+          <option value="8">08:00</option>
+        </select>
+        to
+        <select id="endHourSelect" onchange="updateHours()">
+          <option value="21">21:00</option>
+          <option value="22">22:00</option>
+          <option value="23">23:00</option>
+          <option value="24" selected>24:00</option>
+        </select>
+      </label>
+
+      <button class="sync-btn" onclick="linkDiskFile()" title="Auto-save every change directly to a .json file on your laptop">
+        &#9889; Link Disk File
+      </button>
+      <button onclick="resetChecks()" title="Uncheck all completed blocks for a fresh week">&#8634; Reset Checks</button>
+      <button onclick="exportData()" title="Download JSON backup">&#8681; Export</button>
+      <label class="btn" title="Import JSON backup">
+        &#8679; Import
+        <input type="file" accept=".json" style="display:none" onchange="importData(event)" />
+      </label>
+      <button onclick="clearAllBlocks()">Clear</button>
+      <button onclick="toggleTheme()" title="Switch Dark / Light Theme">&#9789;</button>
+    </div>
+  </header>
+
+  <!-- MAIN WORKSPACE -->
+  <div class="workspace">
+
+    <!-- SIDEBAR: TASK POOL + MINI CALENDAR + SEPARATE DEADLINES -->
+    <aside class="sidebar">
+
+      <!-- 1. CREATE / UNSCHEDULED TASK POOL -->
+      <div class="panel-section">
+        <div class="section-title">
+          <span>Task Pool (Drag to Timetable)</span>
+          <span class="link-action" onclick="openCatModal()">+ Edit Colors/Subs</span>
+        </div>
+
+        <form class="create-form" onsubmit="createPoolTask(event)">
+          <input type="text" id="newTaskTitle" placeholder="Specific topic, chapter, or paper..." required />
+          <div class="form-row">
+            <select id="newTaskCat" onchange="populatePoolSubSelect()"></select>
+            <select id="newTaskSub"></select>
+          </div>
+          <div class="form-row">
+            <select id="newTaskSlots">
+              <option value="1">30 min</option>
+              <option value="2" selected>1 hr</option>
+              <option value="3">1.5 hrs</option>
+              <option value="4">2 hrs</option>
+              <option value="6">3 hrs</option>
+            </select>
+            <button type="submit" class="primary" style="justify-content:center;">+ Add Block</button>
+          </div>
+        </form>
+
+        <div
+          class="backlog-zone"
+          id="backlogZone"
+          ondragover="onDragOverZone(event)"
+          ondragleave="onDragLeaveZone(event)"
+          ondrop="onDropToPool(event)"
+        ></div>
+      </div>
+
+      <!-- 2. MINI CALENDAR & SEPARATE DEADLINES TRACKER -->
+      <div class="panel-section">
+        <div class="section-title">
+          <span>Calendar &amp; Deadlines</span>
+          <span style="font-size:0.66rem; font-weight:400;">Click date to set</span>
+        </div>
+
+        <!-- Mini Interactive Calendar -->
+        <div class="calendar-card">
+          <div class="cal-header">
+            <button type="button" class="cal-nav-btn" onclick="changeCalMonth(-1)">&larr;</button>
+            <span class="cal-month-label" id="calMonthLabel">Month YYYY</span>
+            <button type="button" class="cal-nav-btn" onclick="changeCalMonth(1)">&rarr;</button>
+          </div>
+          <div class="cal-grid" id="calGrid"></div>
+        </div>
+
+        <!-- Add Deadline Form -->
+        <form class="create-form" onsubmit="addDeadline(event)">
+          <input type="text" id="deadlineTitle" placeholder="Deadline (e.g. Physics Mock, Essay)..." required />
+          <div class="form-row">
+            <input type="date" id="deadlineDate" required />
+            <button type="submit" class="primary" style="flex:0 0 auto;">+ Add</button>
+          </div>
+        </form>
+
+        <!-- Deadlines List -->
+        <ul class="deadline-list" id="deadlineList"></ul>
+      </div>
+
+    </aside>
+
+    <!-- WEEKLY 30-MIN TIMETABLE -->
+    <main class="timetable-container">
+      <div class="timetable" id="timetable"></div>
+    </main>
+
+  </div>
+
+  <!-- CATEGORY & SUB-CATEGORY COLOR MANAGER MODAL -->
+  <div class="modal-backdrop" id="catModal" onclick="if(event.target===this) closeCatModal()">
+    <div class="modal-card">
+      <div class="modal-header">
+        <span>Manage Categories, Sub-Categories &amp; Colors</span>
+        <button onclick="closeCatModal()">&#10005; Close</button>
+      </div>
+      <div class="modal-body">
+        <!-- Add New Main Category -->
+        <form class="create-form" onsubmit="addNewCategory(event)">
+          <div style="font-size:0.75rem; font-weight:600; color:var(--text-muted);">Add New Main Category</div>
+          <div class="form-row">
+            <input type="text" id="addCatName" placeholder="Category name (e.g. RESEARCH, LAB)..." required />
+            <input type="color" id="addCatColor" value="#6366f1" class="color-picker" title="Choose category color" />
+            <button type="submit" class="primary" style="flex:0 0 auto;">+ Add Category</button>
+          </div>
+        </form>
+
+        <!-- Existing Categories & Sub-categories List -->
+        <div id="catManagerList" class="cat-manager-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/app.js"></script>
+</body>
+</html>
